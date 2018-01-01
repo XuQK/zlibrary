@@ -13,7 +13,7 @@ import xuqk.github.zlibrary.basekit.dialog.base.BaseNiceDialog;
 import xuqk.github.zlibrary.basekit.dialog.base.ViewConvertListener;
 
 /**
- * @ClassName: BaseViewModel
+ * @ClassName: ZViewModel
  * @PackageName: xuqk.github.zlibrary.baseui
  * @ProjectName: yidcode
  * @Create On 11/20/17 3:04 PM
@@ -25,7 +25,7 @@ import xuqk.github.zlibrary.basekit.dialog.base.ViewConvertListener;
  */
 
 
-public class BaseViewModel<N extends BaseNavigator> extends BaseObservable {
+public class ZViewModel<N extends BaseNavigator> extends BaseObservable {
 
     /**
      * 这是将RxJava流与Activity/Fragment的生命周期绑定的办法
@@ -49,8 +49,7 @@ public class BaseViewModel<N extends BaseNavigator> extends BaseObservable {
     ObservableBoolean mShowCommonDialog = new ObservableBoolean(false);
     BaseNiceDialog mBaseNiceDialog;
 
-
-    public BaseViewModel(Context context) {
+    public ZViewModel(Context context) {
         mContext = context.getApplicationContext();
         if (useRxBus()) {
             RxBusFactory.getBus().register(this);

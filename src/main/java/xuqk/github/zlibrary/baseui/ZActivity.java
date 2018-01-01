@@ -37,8 +37,8 @@ import xuqk.github.zlibrary.basekit.zlog.ZLog;
  */
 
 
-public abstract class ZActivity<D extends ViewDataBinding, VM extends BaseViewModel>
-        extends AppCompatActivity implements UiCallback<BaseViewModel> {
+public abstract class ZActivity<D extends ViewDataBinding, VM extends ZViewModel>
+        extends AppCompatActivity implements UiCallback<ZViewModel> {
 
     private AppCompatActivity mActivity;
     private D mBinding;

@@ -29,7 +29,7 @@ import xuqk.github.zlibrary.basekit.dialog.base.ViewConvertListener;
  * Created by shihao on 2017/1/26.
  */
 
-public abstract class ZLazyFragment<D extends ViewDataBinding, VM extends BaseViewModel>
+public abstract class ZLazyFragment<D extends ViewDataBinding, VM extends ZViewModel>
         extends LazyFragment implements UiCallback {
 
     private D mBinding;

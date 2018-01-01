@@ -38,7 +38,7 @@ import xuqk.github.zlibrary.basekit.dialog.base.ViewConvertListener;
  */
 
 
-public abstract class ZFragment<D extends ViewDataBinding, VM extends BaseViewModel>
+public abstract class ZFragment<D extends ViewDataBinding, VM extends ZViewModel>
         extends Fragment implements UiCallback {
 
     private View mRootView;
