@@ -14,12 +14,14 @@ package xuqk.github.zlibrary.basenet;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import android.support.annotation.NonNull;
 
 import java.io.EOFException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
+
 import okhttp3.Connection;
 import okhttp3.Headers;
 import okhttp3.Interceptor;

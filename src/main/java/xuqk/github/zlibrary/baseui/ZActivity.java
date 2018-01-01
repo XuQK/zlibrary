@@ -1,6 +1,7 @@
 package xuqk.github.zlibrary.baseui;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.databinding.ViewDataBinding;
@@ -8,6 +9,7 @@ import android.os.Bundle;
 import android.support.annotation.CallSuper;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.view.KeyEvent;
 
 import com.gyf.barlibrary.ImmersionBar;
 import com.tbruyelle.rxpermissions2.RxPermissions;
@@ -19,10 +21,11 @@ import io.reactivex.Observable;
 import io.reactivex.ObservableTransformer;
 import io.reactivex.subjects.BehaviorSubject;
 import xuqk.github.zlibrary.basekit.RxBusFactory;
-import xuqk.github.zlibrary.basekit.dialog.ConfirmDialog;
+import xuqk.github.zlibrary.basekit.dialog.CommonDialog;
 import xuqk.github.zlibrary.basekit.dialog.base.BaseNiceDialog;
+import xuqk.github.zlibrary.basekit.dialog.base.OnBackPressedListener;
 import xuqk.github.zlibrary.basekit.dialog.base.ViewConvertListener;
-import xuqk.github.zlibrary.baseui.widget.LoadingDialog;
+import xuqk.github.zlibrary.basekit.zlog.ZLog;
 
 /**
  * @ClassName: ZActivity
@@ -41,7 +44,7 @@ public abstract class ZActivity<D extends ViewDataBinding, VM extends BaseViewMo
     private D mBinding;
     private VM mViewModel;
     private BehaviorSubject<LifecycleEvent> subject = BehaviorSubject.create();
-    private LoadingDialog mLoadingDialog;
+    private BaseNiceDialog mLoadingDialog;
     protected ImmersionBar mImmersionBar;
 
     @Override
@@ -68,7 +71,39 @@ public abstract class ZActivity<D extends ViewDataBinding, VM extends BaseViewMo
         setListener();
         init(savedInstanceState);
         mViewModel.initOnCreate();
+        initLoadingDialog();
         subject.onNext(LifecycleEvent.CREATE);
+    }
+
+    private void initLoadingDialog() {
+        if (mViewModel != null) {
+            mViewModel.mShowLoading.addOnPropertyChangedCallback(new android.databinding.Observable.OnPropertyChangedCallback() {
+                @Override
+                public void onPropertyChanged(android.databinding.Observable observable, int i) {
+                    if (mViewModel.mShowLoading.get()) {
+                        mLoadingDialog = CommonDialog.getLoadingDialog(getViewModel().mLoadingMessage)
+                                .setOnBackPressedListener(new OnBackPressedListener() {
+                                    @Override
+                                    protected void backPressedListener(DialogInterface dialog, int keyCode, KeyEvent event) {
+                                        getViewModel().dismissLoading();
+                                    }
+                                });
+
+                        mLoadingDialog.show(getSupportFragmentManager());
+                    } else {
+                        if (mLoadingDialog != null) {
+                            mLoadingDialog.dismiss();
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    @Override
+    public void onBackPressed() {
+        ZLog.d("alsdjflsdjf");
+        super.onBackPressed();
     }
 
     @Override
@@ -82,18 +117,6 @@ public abstract class ZActivity<D extends ViewDataBinding, VM extends BaseViewMo
     @CallSuper
     protected void onResume() {
         super.onResume();
-        if (mViewModel != null) {
-            mViewModel.mShowLoading.addOnPropertyChangedCallback(new android.databinding.Observable.OnPropertyChangedCallback() {
-                @Override
-                public void onPropertyChanged(android.databinding.Observable observable, int i) {
-                    if (!mViewModel.mShowLoading.get()) {
-                        mLoadingDialog.dismiss();
-                    } else {
-                        mLoadingDialog = LoadingDialog.show(mActivity, mViewModel.mLoadingContent);
-                    }
-                }
-            });
-        }
         subject.onNext(LifecycleEvent.RESUME);
     }
 
@@ -124,6 +147,9 @@ public abstract class ZActivity<D extends ViewDataBinding, VM extends BaseViewMo
         }
         if (mViewModel != null) {
             mViewModel.onDestroy();
+        }
+        if (mImmersionBar != null) {
+            mImmersionBar.destroy();
         }
     }
 
@@ -159,7 +185,7 @@ public abstract class ZActivity<D extends ViewDataBinding, VM extends BaseViewMo
 
     @Override
     public void showConfirmDialog(ViewConvertListener listener) {
-        ConfirmDialog.show(getActivity(), listener);
+        CommonDialog.showConfirmDialog(getActivity(), listener);
     }
 
     @Override
@@ -168,11 +194,20 @@ public abstract class ZActivity<D extends ViewDataBinding, VM extends BaseViewMo
     }
 
     @Override
+    public void showLoadingDialog(@Nullable String message) {
+        mViewModel.showLoading(message);
+    }
+
+    @Override
+    public void dismissLoadingDialog() {
+        mViewModel.dismissLoading();
+    }
+
+    @Override
     public int requestPermission(String requestPermission) {
         int[] result = new int[1];
-        RxPermissions rxPermissions = new RxPermissions(getActivity());
         Observable.create(e -> e.onNext(new Object()))
-                .compose(rxPermissions.ensureEach(requestPermission))
+                .compose(new RxPermissions(getActivity()).ensureEach(requestPermission))
                 .compose(bindToLifecycle())
                 .subscribe(permission -> {
                     if (permission.granted) {
@@ -231,7 +266,11 @@ public abstract class ZActivity<D extends ViewDataBinding, VM extends BaseViewMo
         return subject;
     }
 
-    public LoadingDialog getLoadingDialog() {
+    /**
+     * 获取页面唯一加载弹窗
+     * @return
+     */
+    public BaseNiceDialog getLoadingDialog() {
         return mLoadingDialog;
     }
 

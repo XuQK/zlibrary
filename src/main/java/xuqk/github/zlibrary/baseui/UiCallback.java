@@ -57,6 +57,29 @@ public interface UiCallback<VM> {
     String getViewModelTag();
 
     /**
+     * 回退键
+     */
+    void onBackPressed();
+
+    /**
+     * 结束当前Activity
+     */
+    void finish();
+
+    /**
+     * 设置返回结果
+     * @param result
+     */
+    void setResult(int result);
+
+    /**
+     * 设置带数据的返回结果
+     * @param result
+     * @param data
+     */
+    void setResult(int result, Intent data);
+
+    /**
      * 启动空Activity
      * @param clazz
      */
@@ -88,6 +111,17 @@ public interface UiCallback<VM> {
      * @param dialog
      */
     void showCommonDialog(BaseNiceDialog dialog);
+
+    /**
+     * 显示LoadingDialog
+     * @param message
+     */
+    void showLoadingDialog(@Nullable String message);
+
+    /**
+     * 隐藏LoadingDialog
+     */
+    void dismissLoadingDialog();
 
     /**
      * 请求授权

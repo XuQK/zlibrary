@@ -2,7 +2,6 @@ package xuqk.github.zlibrary.basekit.cache;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 import android.text.TextUtils;
 
 /**

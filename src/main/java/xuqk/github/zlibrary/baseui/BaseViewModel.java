@@ -9,6 +9,8 @@ import android.support.annotation.Nullable;
 import io.reactivex.ObservableTransformer;
 import io.reactivex.subjects.BehaviorSubject;
 import xuqk.github.zlibrary.basekit.RxBusFactory;
+import xuqk.github.zlibrary.basekit.dialog.base.BaseNiceDialog;
+import xuqk.github.zlibrary.basekit.dialog.base.ViewConvertListener;
 
 /**
  * @ClassName: BaseViewModel
@@ -25,12 +27,28 @@ import xuqk.github.zlibrary.basekit.RxBusFactory;
 
 public class BaseViewModel<N extends BaseNavigator> extends BaseObservable {
 
+    /**
+     * 这是将RxJava流与Activity/Fragment的生命周期绑定的办法
+     */
     protected BehaviorSubject<LifecycleEvent> subject = BehaviorSubject.create();
+    /**
+     * 该Context必须是ApplicationContext，防止内存泄漏
+     */
     protected Context mContext;
+    /**
+     * Activity/Fragment行为接口，通过该接口调用宿主Activity/Fragment中的通用方法
+     */
     protected N mNavigator;
     ObservableBoolean mShowLoading = new ObservableBoolean(false);
-    String mLoadingContent = "";
+    String mLoadingMessage = "";
     private boolean mLoadData = true;
+
+    ObservableBoolean mShowConfirmDialog = new ObservableBoolean(false);
+    ViewConvertListener mViewConvertListener;
+
+    ObservableBoolean mShowCommonDialog = new ObservableBoolean(false);
+    BaseNiceDialog mBaseNiceDialog;
+
 
     public BaseViewModel(Context context) {
         mContext = context.getApplicationContext();
@@ -40,7 +58,7 @@ public class BaseViewModel<N extends BaseNavigator> extends BaseObservable {
     }
 
     /**
-     * 只在创建时初始化一次数据
+     * 只在首次创建时初始化一次数据，防止宿主Activity/Fragment被摧毁重建后重新申请数据
      */
     void initOnCreate() {
         if (mLoadData) {
@@ -56,6 +74,10 @@ public class BaseViewModel<N extends BaseNavigator> extends BaseObservable {
 
     }
 
+    /**
+     * 设置宿主Activity/Fragment中的回调接口
+     * @param navigator
+     */
     public void setNavigator(N navigator) {
         mNavigator = navigator;
     }
@@ -65,7 +87,7 @@ public class BaseViewModel<N extends BaseNavigator> extends BaseObservable {
      * @param content
      */
     protected void showLoading(@Nullable String content) {
-        mLoadingContent = content;
+        mLoadingMessage = content;
         mShowLoading.set(true);
     }
     protected void showLoading() {
@@ -76,8 +98,18 @@ public class BaseViewModel<N extends BaseNavigator> extends BaseObservable {
      * 隐藏Loading
      */
     protected void dismissLoading() {
-        mLoadingContent = "";
+        mLoadingMessage = "";
         mShowLoading.set(false);
+    }
+
+    protected void showConfirmDialog(ViewConvertListener listener) {
+        mViewConvertListener = listener;
+        mShowConfirmDialog.set(true);
+    }
+
+    protected void setShowCommonDialog(BaseNiceDialog dialog) {
+        mBaseNiceDialog = dialog;
+        mShowCommonDialog.set(true);
     }
 
     /**

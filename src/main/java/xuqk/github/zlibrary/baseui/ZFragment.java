@@ -1,6 +1,7 @@
 package xuqk.github.zlibrary.baseui;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.databinding.ViewDataBinding;
@@ -8,6 +9,7 @@ import android.os.Bundle;
 import android.support.annotation.CallSuper;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,10 +23,10 @@ import io.reactivex.Observable;
 import io.reactivex.ObservableTransformer;
 import io.reactivex.subjects.BehaviorSubject;
 import xuqk.github.zlibrary.basekit.RxBusFactory;
-import xuqk.github.zlibrary.basekit.dialog.ConfirmDialog;
+import xuqk.github.zlibrary.basekit.dialog.CommonDialog;
 import xuqk.github.zlibrary.basekit.dialog.base.BaseNiceDialog;
+import xuqk.github.zlibrary.basekit.dialog.base.OnBackPressedListener;
 import xuqk.github.zlibrary.basekit.dialog.base.ViewConvertListener;
-import xuqk.github.zlibrary.baseui.widget.LoadingDialog;
 
 /**
  * @ClassName: ZFragment
@@ -44,7 +46,7 @@ public abstract class ZFragment<D extends ViewDataBinding, VM extends BaseViewMo
     private VM mViewModel;
     private D mBinding;
     private BehaviorSubject<LifecycleEvent> subject = BehaviorSubject.create();
-    private LoadingDialog mLoadingDialog;
+    private BaseNiceDialog mLoadingDialog;
 
     @Override
     @CallSuper
@@ -77,8 +79,34 @@ public abstract class ZFragment<D extends ViewDataBinding, VM extends BaseViewMo
         setListener();
         init(savedInstanceState);
         mViewModel.initOnCreate();
+        initLoadingDialog();
         subject.onNext(LifecycleEvent.CREATE_VIEW);
         return mRootView;
+    }
+
+    private void initLoadingDialog() {
+        if (mViewModel != null) {
+            mViewModel.mShowLoading.addOnPropertyChangedCallback(new android.databinding.Observable.OnPropertyChangedCallback() {
+                @Override
+                public void onPropertyChanged(android.databinding.Observable observable, int i) {
+                    if (mViewModel.mShowLoading.get()) {
+                        mLoadingDialog = CommonDialog.getLoadingDialog(getViewModel().mLoadingMessage)
+                                .setOnBackPressedListener(new OnBackPressedListener() {
+                                    @Override
+                                    protected void backPressedListener(DialogInterface dialog, int keyCode, KeyEvent event) {
+                                        getViewModel().dismissLoading();
+                                    }
+                                });
+
+                        mLoadingDialog.show(getActivity().getSupportFragmentManager());
+                    } else {
+                        if (mLoadingDialog != null) {
+                            mLoadingDialog.dismiss();
+                        }
+                    }
+                }
+            });
+        }
     }
 
     @Override
@@ -92,18 +120,6 @@ public abstract class ZFragment<D extends ViewDataBinding, VM extends BaseViewMo
     @CallSuper
     public void onResume() {
         super.onResume();
-        if (mViewModel != null) {
-            mViewModel.mShowLoading.addOnPropertyChangedCallback(new android.databinding.Observable.OnPropertyChangedCallback() {
-                @Override
-                public void onPropertyChanged(android.databinding.Observable observable, int i) {
-                    if (!mViewModel.mShowLoading.get()) {
-                        mLoadingDialog.dismiss();
-                    } else {
-                        mLoadingDialog = LoadingDialog.show(getActivity(), mViewModel.mLoadingContent);
-                    }
-                }
-            });
-        }
         subject.onNext(LifecycleEvent.RESUME);
     }
 
@@ -150,22 +166,6 @@ public abstract class ZFragment<D extends ViewDataBinding, VM extends BaseViewMo
         subject.onNext(LifecycleEvent.DETACH);
     }
 
-    public void onBackPressed() {
-        getActivity().onBackPressed();
-    }
-
-    public void finish() {
-        getActivity().finish();
-    }
-
-    public void setResult(int result) {
-        getActivity().setResult(result);
-    }
-
-    public void setResult(int result, Intent data) {
-        getActivity().setResult(result, data);
-    }
-
     /**
      * 重写此方法，设置回调接口
      */
@@ -177,6 +177,30 @@ public abstract class ZFragment<D extends ViewDataBinding, VM extends BaseViewMo
     @Override
     public boolean useRxBus() {
         return false;
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (mLoadingDialog != null && mLoadingDialog.isResumed()) {
+            mLoadingDialog.dismiss();
+        } else {
+            getActivity().onBackPressed();
+        }
+    }
+
+    @Override
+    public void finish() {
+        getActivity().finish();
+    }
+
+    @Override
+    public void setResult(int result) {
+        getActivity().setResult(result);
+    }
+
+    @Override
+    public void setResult(int result, Intent data) {
+        getActivity().setResult(result, data);
     }
 
     @Override
@@ -198,12 +222,22 @@ public abstract class ZFragment<D extends ViewDataBinding, VM extends BaseViewMo
 
     @Override
     public void showConfirmDialog(ViewConvertListener listener) {
-        ConfirmDialog.show(getActivity(), listener);
+        CommonDialog.showConfirmDialog(getActivity(), listener);
     }
 
     @Override
     public void showCommonDialog(BaseNiceDialog dialog) {
         dialog.show(getActivity().getSupportFragmentManager());
+    }
+
+    @Override
+    public void showLoadingDialog(@Nullable String message) {
+        mViewModel.showLoading(message);
+    }
+
+    @Override
+    public void dismissLoadingDialog() {
+        mViewModel.dismissLoading();
     }
 
     @Override
@@ -266,7 +300,7 @@ public abstract class ZFragment<D extends ViewDataBinding, VM extends BaseViewMo
         return subject;
     }
 
-    public LoadingDialog getLoadingDialog() {
+    public BaseNiceDialog getLoadingDialog() {
         return mLoadingDialog;
     }
 

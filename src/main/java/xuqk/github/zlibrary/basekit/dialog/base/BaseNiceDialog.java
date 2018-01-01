@@ -1,5 +1,6 @@
 package xuqk.github.zlibrary.basekit.dialog.base;
 
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.LayoutRes;
 import android.support.annotation.Nullable;
@@ -8,6 +9,7 @@ import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.view.Gravity;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,7 +19,7 @@ import android.view.WindowManager;
 import xuqk.github.zlibrary.R;
 import xuqk.github.zlibrary.basekit.Kits;
 
-public abstract class BaseNiceDialog extends DialogFragment {
+public abstract class BaseNiceDialog extends DialogFragment implements DialogInterface.OnKeyListener {
     private static final String MARGIN = "margin";
     private static final String WIDTH = "width";
     private static final String HEIGHT = "height";
@@ -37,6 +39,8 @@ public abstract class BaseNiceDialog extends DialogFragment {
     private int animStyle;
     @LayoutRes
     protected int layoutId;
+
+    private OnBackPressedListener mBackPressedListener;
 
     public abstract int intLayoutId();
 
@@ -58,6 +62,7 @@ public abstract class BaseNiceDialog extends DialogFragment {
             outCancel = savedInstanceState.getBoolean(CANCEL);
             animStyle = savedInstanceState.getInt(ANIM);
             layoutId = savedInstanceState.getInt(LAYOUT);
+            mBackPressedListener = savedInstanceState.getParcelable("backListener");
         }
     }
 
@@ -73,6 +78,13 @@ public abstract class BaseNiceDialog extends DialogFragment {
     public void onStart() {
         super.onStart();
         initParams();
+        getDialog().setOnKeyListener(this);
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        mBackPressedListener = null;
     }
 
     /**
@@ -91,6 +103,7 @@ public abstract class BaseNiceDialog extends DialogFragment {
         outState.putBoolean(CANCEL, outCancel);
         outState.putInt(ANIM, animStyle);
         outState.putInt(LAYOUT, layoutId);
+        outState.putParcelable("backListener", mBackPressedListener);
     }
 
     private void initParams() {
@@ -128,6 +141,11 @@ public abstract class BaseNiceDialog extends DialogFragment {
             window.setAttributes(lp);
         }
         setCancelable(outCancel);
+    }
+
+    public BaseNiceDialog setOnBackPressedListener(OnBackPressedListener backPressedListener) {
+        this.mBackPressedListener = backPressedListener;
+        return this;
     }
 
     public BaseNiceDialog setMargin(int margin) {
@@ -173,5 +191,15 @@ public abstract class BaseNiceDialog extends DialogFragment {
         ft.add(this, String.valueOf(System.currentTimeMillis()));
         ft.commitAllowingStateLoss();
         return this;
+    }
+
+    @Override
+    public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK && mBackPressedListener != null) {
+            mBackPressedListener.backPressedListener(dialog, keyCode, event);
+            return true;
+        } else {
+            return false;
+        }
     }
 }
